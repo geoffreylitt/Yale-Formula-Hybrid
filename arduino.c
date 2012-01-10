@@ -4,9 +4,8 @@
     
     --------ABOUT-------------------------------------------------------------------
     
-    version 0.1
-    by Jan Kolmas, Geoffrey Litt and Stephen Hall
-    01/12/2011
+    version 0.2
+    by Jan Kolmas, Geoffrey Litt, Stephen Hall, et al.
     
     Written for the Yale FSAE formula racing team.
     
@@ -30,43 +29,6 @@
                    ineffective or low on fuel.
         Electric:  Uses the electric motor only. Useful for manipulation or when
                    problems with engine occur.
-    
-    
-    
-    --------NOTES-------------------------------------------------------------------
-    
-    Last edited by: Jan Kolmas 4/21/11
-    Edit notes log:
-        Geoffrey:
-        Fixed velocity calculation code (reedswitch is normally HIGH!)
-        Made sevensegout pins output instead of float
-        changed radiator temp sensor to reverse the scaling
-        switched sevenseg pins because the digits were reversed
-        Jan:
-        Added the assist to engage at 90% throttle. Updated Endurance mode. Now it is basically autocross mode with regen.
-        Jan:
-        Split the runTheCar function on two halves, in one it sets variables and in second it digital/analog writes to pins.
-        High voltage is enabled at all times in Electric and Endurance mode.
-        Sid:
-        Included functionality for switching on the HV in testTheCar(). Needed incase programming of the Kelly or BMS is required.
-        Also reset the servo if servoEnable is false
-        Jan:
-        little edits, comments, typo corrections so that it compiles
-        Geoffrey: 
-        got rid of hiVoltageOverride, simplified to just use autocross mode as a condition since hv is always on in other two modes
-        added some "else" things that turn off things when they are not turned on.
-        
-    
-    comment lines starting with //! need to be changed
-    
-    To do:
-             Velocity calculation testing
-             Check everything
-             Make a lead-acid version
-    
-    Tasks to do after testing in car:
-                 adjust critical values
-                 adjust analog scales
     
     
     --------CODE STRUCTURE----------------------------------------------------------
@@ -118,6 +80,7 @@
                 #define radiatorTempPin    A3 //Temperature of the radiator 
                 #define fuelPin            A4 //fuel level sensor
                 #define throttlePin        A1 //throttle amount - from the pedal
+                #define gearPin            A5 //gear sensor
                 
                 //digital input pins  
                 
@@ -241,12 +204,6 @@
                                              //the effective path of the throttle pedal
         const int THROTTLE_SCALE_MAX = 602;
         
-        
-        const float GEAR_1_RATIO = 200;        //For every gear, the ratio is RPM/mph !adjust all
-        const float GEAR_2_RATIO = 150;
-        const float GEAR_3_RATIO = 65;
-        const float GEAR_4_RATIO = 45;
-        
         const int SHORT_COMM_INTERVAL = 50;  // for high frequency data in ms !adjust
         const int LONG_COMM_INTERVAL = 1000; //for low frequency data in ms !adjust
         
@@ -315,6 +272,7 @@
         int throttleAnalog =     0;
         int battTempAnalog =     0;
         int radiatorTempAnalog = 0;
+        int gearAnalog =         0;
         
         //These variables are sent to the servo and kelly
         int servoOut =           0;
@@ -385,6 +343,7 @@
                fuelAnalog =         analogRead(fuelPin); 
                throttleAnalog =     analogRead(throttlePin);
                radiatorTempAnalog = analogRead(radiatorTempPin);
+               gearAnalog =         analogRead(gearPin);
                
                //digital pins
                //Most of the variables are set true when pins are driven LOW. Refer to Ports_2011 on Google Docs
@@ -448,19 +407,8 @@
                 if (currentTime - previousVelocityTime > 2000) velocity = 0;    
             } 
                         
-            //Gear is calculated from rpm and speed because we don't have a gear sensor. 
-            //Up to now the gear is used just to be sent to the serial
-            //gear = 0 means clutch pressed / neutral / unknown gear
-                if(clutchPressed == true|| velocity == 0) gear = 0;
-                else
-                { float rpmMphRatio = rpm / velocity;
-                       if      (rpmMphRatio > GEAR_1_RATIO * 0.8 && rpmMphRatio < GEAR_1_RATIO * 1.2 )  gear = 1;
-                       else if (rpmMphRatio > GEAR_2_RATIO * 0.8 && rpmMphRatio < GEAR_2_RATIO * 1.2 )  gear = 2;
-                       else if (rpmMphRatio > GEAR_3_RATIO * 0.8 && rpmMphRatio < GEAR_3_RATIO * 1.2 )  gear = 3;
-                       else if (rpmMphRatio > GEAR_4_RATIO * 0.8 && rpmMphRatio < GEAR_4_RATIO * 1.15 ) gear = 4;
-                       else gear = 0;           
-                       }
-            
+            //Calculation of gear position
+            //To do: map gear sensor outputs to gears
                
         }
           
