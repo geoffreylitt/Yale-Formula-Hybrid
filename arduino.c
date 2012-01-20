@@ -2,7 +2,7 @@
     //    endurance power limit w/ dial
     //    compensate for engine torque curve in autocross mode: map power to function
     //    boost button: overrides any mode and puts motor => 100%, esp to help w/ launch control.  and, motor still runs even when clutch is enabled
-        
+    //    refactor to run based on dashboard button values rather than "modes"
     
     /*
     
@@ -83,26 +83,26 @@
                 //analog input pins
                 
                 #define rpmPin             A0 //RPM 
+                #define throttlePin        A1 //throttle amount - from the pedal
+                #define gearPin            A2 //gear sensor
                 #define radiatorTempPin    A3 //Temperature of the radiator 
                 #define fuelPin            A4 //fuel level sensor
-                #define throttlePin        A1 //throttle amount - from the pedal
-                #define gearPin            A5 //gear sensor
-                
+
                 //digital input pins  
                 
-                #define hiVoltageLoBattPin 22 //Is HIGH when the High voltage battery is critical
-                #define BMSFaultPin        23 //Is HIGH when there is a problem with the BMS (critical temperature for example)
-                #define clutchPin          24 //Activates if the clutch is pressed
-                #define assistPin          25 //Electric assist button for Autocross mode
-                #define brakePin           26 //Tells if the brake is pressed
-                #define servoEnablePin     27 //Hardware switch on panel, enables output to servo
-                #define kellyEnablePin     28 //Hardware switch on panel, enables output to kelly
-                #define reedPin            29 //Reed switch for velocity measuring
-                #define modeEndurancePin   30 //A three position switch is located on the driving wheel,
-                #define modeElectricPin    31 //the mode pins indicate in which mode will the car be running,
-                                              //autocross being the default.
-                #define telemetryEnablePin 34 //Switch to enable/disable telemetry
-        
+                //sensors                
+                #define hiVoltageLoBattPin 22 //HIGH when the High voltage battery is critical
+                #define BMSFaultPin        23 //HIGH when there is a problem with the BMS (critical temperature for example)
+                #define clutchPin          24 //HIGH when the clutch is pressed
+                #define brakePin           25 //HIGH when the brake is pressed
+                #define reedPin            26 //HIGH when reed switch is on (magnet adjacent to sensor)
+                
+                //dashboard buttons
+                #define boostPin           27 //HIGH when the boost button is pressed
+                #define engineEnablePin    28 //HIGH when the gas engine enable button is pressed
+                #define motorEnablePin     29 //HIGH when the electric motor enable button is pressed
+                #define endurancePin       30 //HIGH when the endurance mode enable button is pressed
+                #define telemetryEnablePin 31 //HIGH when telemetry enable switch enabled
         
         //output pins
                  //PWM output pins
@@ -139,13 +139,13 @@
         //motor and engine input until the values drop below limit values. Limit
         //values were introduced to prevent oscillations.
         
-        const int CRITICAL_RPM =    4000;    //In rounds per minute !adjust
+        const int CRITICAL_RPM =    4000;    //In revolutions per minute !adjust
         const int CRITICAL_VELOCITY = 45;    //In miles per hour !adjust 
         const int CRITICAL_BATT =     75;    //In volts !adjust
         const int CRITICAL_FUEL =     10;    //In percent !adjust
         const int CRITICAL_TEMP =    230;    //In degrees Fahrenheit !adjust
         
-        const int LIMIT_RPM =    3500;       //In rounds per minute !adjust
+        const int LIMIT_RPM =    3500;       //In revolutions per minute !adjust
         const int LIMIT_VELOCITY = 35;       //In miles per hour !adjust
         const int LIMIT_TEMP =    210;       //In degrees Fahrenheit !adjust
         
@@ -198,9 +198,6 @@
         const int LOWER_EFFICIENCY_LEVEL = 1000; //In rounds per minute, used in endurance mode !adjust
         const int UPPER_EFFICIENCY_LEVEL = 3000; //!adjust
         
-        //We want to map the analog values to apropriate units, because the analog input
-        //is from 0 to 1023
-        
         const int RPM_SCALE_MAX =         4000; //!adjust
         const int VELOCITY_SCALE_MAX =      50; //!adjust
         const int RADIATORTEMP_SCALE_MIN = 180; //In degrees Fahrenheit !adjust
@@ -239,8 +236,8 @@
         
         //These values are not the inputs, but are calculated from the analog data to
         //have the right scale and units 
-        int rpm =           0;               //In rounds per minute
-        int velocity =      0;               //In mph. The variable is called velocity because "speed" is some system variable
+        int rpm =           0;               //In revolutions per minute
+        int velocity =      0;               //In mph.
         int mode =          AUTOCROSS_MODE;  //Autocross mode by default
         int fuel =          0;               //In percent
         int throttle =      0;               //For the servo, scaled from 0 to 180 (degrees)
