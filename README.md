@@ -2,7 +2,9 @@
 
 This is the code used to run the Arduino microcontroller in the Yale Bulldogs Racing racecar.
 
-Please use concise, descriptive commit messages.
+To program the car, you need to copy-paste this code into the Arduino IDE.  The file is saved as a .c file because the code is basically C, and you can edit it in your C editor of choice.
+
+**Check that all code compiles successfully in the Arduino IDE before pushing to the repo!  Don't push broken code.** Also, please use concise, descriptive commit messages.
 
 ##Setup guide for Git newbies##
 
